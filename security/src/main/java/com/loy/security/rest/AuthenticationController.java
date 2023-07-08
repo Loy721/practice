@@ -4,7 +4,7 @@ import com.loy.security.details.AuthenticationRequest;
 import com.loy.security.details.AuthenticationResponse;
 import com.loy.security.exception.IncorrectUserOrPassword;
 import com.loy.security.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,17 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/auth")
-public class RestControllerV1Authentication {
+@RequiredArgsConstructor
+public class AuthenticationController {
 
+    private final UserDetailsService userDetailsService;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtUtil jwtTokenUtil;
+    private final JwtUtil jwtTokenUtil;
 
     @PostMapping("/signin")
     public AuthenticationResponse createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {

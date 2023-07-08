@@ -1,10 +1,9 @@
 package com.loy.security.service;
 
 import com.loy.security.entity.User;
-import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 public interface UserService {
-    User getById(Integer id);
-
-    User getByEmail(String email);
+    Optional<User> getByEmail(String email);
 }

@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue
     private Integer id;
     @Column(name = "first_name")
     private String firstName;

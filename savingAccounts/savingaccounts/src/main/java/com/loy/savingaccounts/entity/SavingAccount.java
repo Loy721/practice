@@ -12,13 +12,13 @@ import lombok.Setter;
 @Setter
 public class SavingAccount {
     @Id
-    @GeneratedValue
-    @Column(name = "user_id")
-    private Integer userId;
+    @Column(name = "user_email")
+    private String email;
 //    @OneToMany(mappedBy = "savingAccountNumber", cascade = CascadeType.ALL, orphanRemoval = true)
 //    private List<AccountOperation> accountOperations;
-    private Integer number;
-    private Float balance;
+    @Column(nullable = false,unique = true)
+    private String number;
+    private Double balance;
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "number_card")
     private Card card;

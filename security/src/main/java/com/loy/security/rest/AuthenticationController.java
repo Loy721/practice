@@ -22,7 +22,18 @@ public class AuthenticationController {
 
     private final JwtUtil jwtTokenUtil;
 
-    @PostMapping("/signin")
+
+    @GetMapping("/{jwt}")
+    public Boolean authenticate(@PathVariable String jwt){
+        String username = jwtTokenUtil.extractUsername(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+        if (jwtTokenUtil.validateToken(jwt, userDetails))
+            return true;
+        return false;
+        }
+
+    @PostMapping("/login")
     public AuthenticationResponse createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
         try {
 
@@ -39,11 +50,6 @@ public class AuthenticationController {
         } catch (Exception e) {
             throw new IncorrectUserOrPassword("Incorrect username or password", e);
         }
-    }
-
-    @GetMapping("/test")
-    public String getOk(){
-        return "OK";
     }
 
 }

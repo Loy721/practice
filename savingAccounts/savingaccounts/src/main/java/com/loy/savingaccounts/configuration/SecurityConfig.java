@@ -1,37 +1,34 @@
-package com.loy.security.configuration;
+package com.loy.savingaccounts.configuration;
 
+import com.loy.savingaccounts.filter.JwtRequestFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    @Bean
-    @Autowired
-    AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
+    private final JwtRequestFilter jwtRequestFilter;
 
     @Bean
     protected SecurityFilterChain configuration(@Autowired HttpSecurity http) throws Exception {
         return http
                 .httpBasic().disable()
-                .csrf().disable().cors().disable()
+                .csrf().disable()
+                .cors().and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeHttpRequests(
                         authz -> authz
-                                .requestMatchers("/**").permitAll()
+                                .anyRequest().authenticated()
+                                .and()
+                                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 ).build();
     }
 
@@ -41,4 +38,3 @@ public class SecurityConfig {
         return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
     }
 }
-

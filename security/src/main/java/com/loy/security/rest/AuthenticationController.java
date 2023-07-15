@@ -4,7 +4,7 @@ import com.loy.security.details.AuthenticationRequest;
 import com.loy.security.details.AuthenticationResponse;
 import com.loy.security.exception.IncorrectUserOrPassword;
 import com.loy.security.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,19 +13,27 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/auth")
-public class RestControllerV1Authentication {
+@RequiredArgsConstructor
+public class AuthenticationController {
+
+    private final UserDetailsService userDetailsService;
+
+    private final AuthenticationManager authenticationManager;
+
+    private final JwtUtil jwtTokenUtil;
 
 
-    @Autowired
-    private UserDetailsService userDetailsService;
+    @GetMapping("/{jwt}")
+    public Boolean authenticate(@PathVariable String jwt){
+        String username = jwtTokenUtil.extractUsername(jwt);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+        if (jwtTokenUtil.validateToken(jwt, userDetails))
+            return true;
+        return false;
+        }
 
-    @Autowired
-    private JwtUtil jwtTokenUtil;
-
-    @PostMapping("/signin")
+    @PostMapping("/login")
     public AuthenticationResponse createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
         try {
 
@@ -42,11 +50,6 @@ public class RestControllerV1Authentication {
         } catch (Exception e) {
             throw new IncorrectUserOrPassword("Incorrect username or password", e);
         }
-    }
-
-    @GetMapping("/test")
-    public String getOk(){
-        return "OK";
     }
 
 }

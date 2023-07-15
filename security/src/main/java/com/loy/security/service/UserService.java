@@ -6,4 +6,10 @@ import java.util.Optional;
 
 public interface UserService {
     Optional<User> getByEmail(String email);
+
+    Boolean existByEmail(String email);
+
+    User addUser(User user);
+
+    Integer getNextValFromSequence();
 }

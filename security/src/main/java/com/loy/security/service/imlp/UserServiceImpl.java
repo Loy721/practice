@@ -17,4 +17,19 @@ public class UserServiceImpl  implements UserService {
     public Optional<User> getByEmail(String email) {
         return userRepository.getByEmail(email);
     }
+
+    @Override
+    public Boolean existByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public User addUser(User user) {
+        return userRepository.saveAndFlush(user);
+    }
+
+    @Override
+    public Integer getNextValFromSequence() {
+        return userRepository.getNextValFromSequence();
+    }
 }

@@ -1,5 +1,6 @@
 package com.loy.savingaccounts.rest;
 
+import com.loy.savingaccounts.domain.SavingAccountOperationService;
 import com.loy.savingaccounts.entity.AccountOperation;
 import com.loy.savingaccounts.entity.SavingAccount;
 import com.loy.savingaccounts.entity.TransferType;
@@ -25,92 +26,34 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SavingAccountController {
 
-    private final NumberGeneratorUtil numberGenerator;
-
-    private final SavingAccountService savingAccountService;
-
-    private final AccountOperationService accountOperationService;
-
-    private AccountOperation saveOperation(SavingAccount fromSavingAccount, SavingAccount toSavingAccount,
-                                           Double sum, TypeOperation typeOperation, Double balance) {
-        AccountOperation accountOperation = new AccountOperation(accountOperationService.getNextValSequence(),
-                fromSavingAccount, toSavingAccount, balance, sum, LocalDateTime.now(), typeOperation,
-                TransferType.SAVING_ACCOUNT, 0.);
-        return accountOperationService.addOperation(accountOperation);
-    }
+    private final SavingAccountOperationService savingAccountOperationService;
 
     @GetMapping("/history")
     public List<AccountOperationJson> getAccountHistory(Principal principal) {
-
-        SavingAccount savingAccount = savingAccountService.findByUserEmail(principal.getName()).orElseThrow();
-        return accountOperationService.getHistory(savingAccount.getNumber()).stream()
-                .map(x -> new AccountOperationJson(x.getSavingAccountNumber().getNumber(),
-                        x.getToSavingAccountNumber() == null ? null: x.getToSavingAccountNumber().getNumber(),
-                        x.getDate(), x.getBalance(), x.getAmount(), x.getTypeOperation(),
-                        x.getTransferType(), x.getCommission())).collect(Collectors.toList());
+      return savingAccountOperationService.getHistory(principal);
     }
 
     @PostMapping
     public ResponseEntity<?> createSavingAccount(Principal principal) {
-        if (!savingAccountService.existByEmail(principal.getName())) {
-            SavingAccount savingAccount = new SavingAccount();
-            savingAccount.setEmail(principal.getName());
-            savingAccount.setNumber(numberGenerator.generateUniqueStringOfNumberForSavingAccount());
-            savingAccount.setBalance(0.);
-            savingAccountService.save(savingAccount);
-
-            return new ResponseEntity<>(HttpStatus.OK);
-        } else
-            throw new RuntimeException("Saving account already exists");
+        savingAccountOperationService.createSavingAccount(principal);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PutMapping("/replenishment/{sum}")
-    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Double replenishment(Principal principal, @PathVariable Double sum) {
-
-        SavingAccount savingAccount = savingAccountService.findByUserEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Saving account does not exists"));
-        savingAccount.setBalance(savingAccount.getBalance() + sum);
-
-        saveOperation(savingAccount, null, sum,
-                TypeOperation.REPLENISHMENT, savingAccount.getBalance());
-
+        savingAccountOperationService.replenishment(principal,sum);
         return sum;
     }
 
     @PutMapping("/transfer/{number}/{sum}")
-    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Double transfer(Principal principal, @PathVariable String number, @PathVariable Double sum) {
-        SavingAccount fromSavingAccount = savingAccountService.findByUserEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Saving account does not exists"));
-
-        if(fromSavingAccount.getNumber().equals(number))
-            throw new RuntimeException("Unsupported");
-        if (fromSavingAccount.getBalance() < sum)
-            throw new RuntimeException("Insufficient funds");
-        fromSavingAccount.setBalance(fromSavingAccount.getBalance() - sum);
-        SavingAccount toSavingAccount = savingAccountService.findByNumber(number)
-                .orElseThrow(() -> new RuntimeException("Saving account does not exists"));
-        toSavingAccount.setBalance(toSavingAccount.getBalance() + sum);
-
-        saveOperation(fromSavingAccount, toSavingAccount, sum,
-                TypeOperation.TRANSFER, fromSavingAccount.getBalance());
-
+        savingAccountOperationService.transfer(principal, number, sum);
         return sum;
     }
 
     @PutMapping("/pay/{sum}")
-    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Double pay(Principal principal, @PathVariable Double sum) {
-
-        SavingAccount savingAccount = savingAccountService.findByUserEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Saving account does not exists"));
-        if (savingAccount.getBalance() < sum)
-            throw new RuntimeException("Insufficient funds");
-        savingAccount.setBalance(savingAccount.getBalance() - sum);
-        saveOperation(savingAccount, null, sum,
-                TypeOperation.PAY, savingAccount.getBalance());
-
+        savingAccountOperationService.pay(principal, sum);
         return sum;
     }
 }
